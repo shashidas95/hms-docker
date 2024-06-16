@@ -1,0 +1,59 @@
+version: '3.8'
+services:
+  nginx:
+    build: ./nginx/
+    container_name: nginx
+    ports:
+      - 80:80
+    depends_on:
+      - database
+      - php-fpm
+    volumes:
+      - ./src:/var/www/html
+    restart: always
+    networks:
+      - hospital
+  database:
+    build: ./mysql/
+    container_name: database
+    ports:
+      - 3306:3306
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}  
+    restart: always
+    networks:
+      - hospital
+  php-fpm:
+    build: ./src/
+    container_name: php-fpm
+    ports:
+      - 9000:9000
+    volumes:
+      - ./src:/var/www/html
+    networks:
+      - hospital
+    restart: always
+  phpmyadmin:
+    image: phpmyadmin:latest
+    platform: linux/arm64/v8
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: database
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}  
+    ports:
+      - 3400:80
+    depends_on:
+      - database
+    networks:
+      - hospital
+    restart: always
+
+networks:
+  hospital:
+    driver: bridge
